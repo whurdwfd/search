@@ -108,6 +108,8 @@ class SearchableBehavior extends ModelBehavior {
 				$this->_addCondQuery($Model, $conditions, $data, $field);
 			} elseif ($field['type'] === 'subquery') {
 				$this->_addCondSubquery($Model, $conditions, $data, $field);
+			} elseif ($field['type'] === 'param') {
+				$this->_addCondParam($Model, $conditions, $data, $field);
 			}
 		}
 		return $conditions;
@@ -479,6 +481,23 @@ class SearchableBehavior extends ModelBehavior {
 			if (!empty($subquery)) {
 				$conditions[] = $Model->getDataSource()->expression("$fieldName in ($subquery)");
 			}
+		}
+		return $conditions;
+	}
+
+/**
+ * Add Conditions based expressions to search conditions.
+ *
+ * @param Model $Model  Instance of AppModel
+ * @param array $conditions Existing conditions.
+ * @param array $data Data for a field.
+ * @param array $field Info for field.
+ * @return array of conditions modified by this method
+ */
+	protected function _addCondParam(Model $Model, &$conditions, $data, $field) {
+		if ((method_exists($Model, $field['method']) || $this->_checkBehaviorMethods($Model, $field['method'])) && (!empty($field['allowEmpty']) || !empty($data[$field['name']]) || (isset($data[$field['name']]) && (string)$data[$field['name']] !== ''))) {
+			$fieldValues = $Model->{$field['method']}($data, $field);
+			$conditions['params'] = $fieldValues;
 		}
 		return $conditions;
 	}
